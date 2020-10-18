@@ -3,11 +3,10 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"time"
-
-	"github.com/spf13/cobra"
 
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/rs/zerolog"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
@@ -16,18 +15,21 @@ var cfgFile string
 var config Config
 
 type Config struct {
-	projects Projects
+	Project []Project
 }
 
-type Projects struct {
-	project     string
-	tableConfig TableConfig
+type Project struct {
+	Name        string
+	TableConfig []TableConfig
 }
 
 type TableConfig struct {
-	table         string
-	timethreshold time.Time
+	Table         string
+	DateForShards string
+	Timethreshold string
 }
+
+var verbose, debug bool // for verbose and debug output
 
 // rootCmd represents the root command
 var rootCmd = &cobra.Command{
@@ -42,13 +44,6 @@ func Execute() {
 		os.Exit(1)
 	}
 }
-
-func init() {
-	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.tblmonit.yaml)")
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
 func initConfig() {
 	if cfgFile != "" {
 		// Use config file from the flag.
@@ -70,12 +65,34 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("Failed to read Config File:", viper.ConfigFileUsed())
+		fmt.Println("Failed to read Config File", viper.ConfigFileUsed(), err)
 		os.Exit(1)
 	}
 
 	if err := viper.Unmarshal(&config); err != nil {
-		fmt.Println("Failed to read Config File:", viper.ConfigFileUsed())
+		fmt.Println("Failed to read Config File", viper.ConfigFileUsed(), err)
 		os.Exit(1)
 	}
+
+	logOutput()
+}
+
+func logOutput() {
+	zerolog.SetGlobalLevel(zerolog.Disabled) // default: quiet mode
+	switch {
+	case verbose:
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case debug:
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
+}
+
+func init() {
+	cobra.OnInitialize(initConfig)
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.tblmonit.yaml)")
+	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	// for log output
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable varbose log output")
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug log output")
 }
