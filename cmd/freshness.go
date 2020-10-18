@@ -61,7 +61,7 @@ func checkFreshness(project Project) ([]string, error) {
 		tableID := getTableID(tc)
 
 		md, err := client.Dataset(datasetID).Table(tableID).Metadata(ctx)
-		if err != nil {  // this means the table is not created
+		if err != nil { // this means the table is not created
 			log.Info().Msgf("failed to fetch metadata: table: %s.%s:", datasetID, tableID)
 			oldTables = append(oldTables, tc.Table)
 		}
