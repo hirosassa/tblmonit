@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/hirosassa/tblmonit/config"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -12,22 +13,7 @@ import (
 
 var cfgFile string
 
-var config Config
-
-type Config struct {
-	Project []Project
-}
-
-type Project struct {
-	Name        string
-	TableConfig []TableConfig
-}
-
-type TableConfig struct {
-	Table         string
-	DateForShards string
-	Timethreshold string
-}
+var cfg config.Config
 
 var verbose, debug bool // for verbose and debug output
 
@@ -69,7 +55,7 @@ func initConfig() {
 		os.Exit(1)
 	}
 
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := viper.Unmarshal(&cfg); err != nil {
 		fmt.Println("Failed to read Config File", viper.ConfigFileUsed(), err)
 		os.Exit(1)
 	}

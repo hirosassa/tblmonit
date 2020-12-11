@@ -11,5 +11,6 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
 	go.opencensus.io v0.22.5 // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/api v0.33.0 // indirect
 )

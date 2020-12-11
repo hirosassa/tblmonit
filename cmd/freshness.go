@@ -7,6 +7,7 @@ import (
 	"time"
 
 	bq "cloud.google.com/go/bigquery"
+	"github.com/hirosassa/tblmonit/config"
 	"github.com/rs/zerolog/log"
 
 	"github.com/spf13/cobra"
@@ -29,7 +30,7 @@ The target tables and time thresholds should be listed on config file.
 }
 
 func runFreshnessCmd(cmd *cobra.Command, args []string) error {
-	for _, p := range config.Project {
+	for _, p := range cfg.Project {
 		oldTables, err := checkFreshness(p)
 		if err != nil {
 			return fmt.Errorf("failed to check freshness: project: %s, error: %w", p.Name, err)
@@ -48,7 +49,7 @@ func runFreshnessCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func checkFreshness(project Project) ([]string, error) {
+func checkFreshness(project config.Project) ([]string, error) {
 	ctx := context.Background()
 	client, err := bq.NewClient(ctx, project.Name)
 	if err != nil {
@@ -56,24 +57,27 @@ func checkFreshness(project Project) ([]string, error) {
 	}
 
 	var oldTables []string
-	for _, tc := range project.TableConfig {
-		datasetID := strings.Split(tc.Table, ".")[0]
-		tableID := getTableID(tc)
+	for _, ds := range project.Dataset {
+		for _, tc := range ds.TableConfig {
+			datasetID := ds.Name
+			tableID := getTableID(tc)
 
-		md, err := client.Dataset(datasetID).Table(tableID).Metadata(ctx)
-		if err != nil { // this means the table is not created
-			log.Info().Msgf("failed to fetch metadata: table: %s.%s:", datasetID, tableID)
-			oldTables = append(oldTables, tc.Table)
-		}
+			md, err := client.Dataset(datasetID).Table(tableID).Metadata(ctx)
+			if err != nil { // table is not created
+				log.Warn().Msgf("failed to fetch metadata: table: %s.%s:", datasetID, tableID)
+				oldTables = append(oldTables, tc.Table)
+			}
 
-		if isOld(tc.Timethreshold, md.LastModifiedTime) {
-			oldTables = append(oldTables, tc.Table)
+			if isOld(tc.Timethreshold, md.LastModifiedTime) {
+				oldTables = append(oldTables, tc.Table)
+			}
 		}
 	}
 	return oldTables, nil
 }
 
-func getTableID(tc TableConfig) string {
+// getTableID returns suitable table id.
+func getTableID(tc config.TableConfig) string {
 	datefmt := "20060102"
 	location, _ := time.LoadLocation("Asia/Tokyo")
 

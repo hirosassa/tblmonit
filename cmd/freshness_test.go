@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hirosassa/tblmonit/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,11 +14,11 @@ func TestGetTableID(t *testing.T) {
 	now := time.Now()
 
 	tests := []struct {
-		tc      TableConfig
+		tc      config.TableConfig
 		wantRes string
 	}{
 		{
-			tc: TableConfig{
+			tc: config.TableConfig{
 				Table:         "sample_dataset.sample_table_on_",
 				DateForShards: "TODAY",
 				Timethreshold: "08:00:00",
@@ -25,7 +26,7 @@ func TestGetTableID(t *testing.T) {
 			wantRes: "sample_table_on_" + now.In(location).Format(datefmt),
 		},
 		{
-			tc: TableConfig{
+			tc: config.TableConfig{
 				Table:         "sample_dataset.sample_table_on_",
 				DateForShards: "ONE_DAY_AGO",
 				Timethreshold: "08:00:00",
@@ -33,7 +34,7 @@ func TestGetTableID(t *testing.T) {
 			wantRes: "sample_table_on_" + now.In(location).AddDate(0, 0, -1).Format(datefmt),
 		},
 		{
-			tc: TableConfig{
+			tc: config.TableConfig{
 				Table:         "sample_dataset.sample_table_on_",
 				DateForShards: "FIRST_DAY_OF_THE_MONTH",
 				Timethreshold: "08:00:00",
@@ -41,7 +42,7 @@ func TestGetTableID(t *testing.T) {
 			wantRes: "sample_table_on_" + time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, location).Format(datefmt),
 		},
 		{
-			tc: TableConfig{
+			tc: config.TableConfig{
 				Table:         "sample_dataset.non_sharded_table",
 				DateForShards: "",
 				Timethreshold: "08:00:00",
