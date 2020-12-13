@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"time"
 
-	"github.com/hirosassa/tblmonit/config"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
@@ -13,7 +13,11 @@ import (
 
 var cfgFile string
 
-var cfg config.Config
+var cfg tmConfig
+
+type tmConfig struct {
+	timeZone string
+}
 
 var verbose, debug bool // for verbose and debug output
 
@@ -60,7 +64,21 @@ func initConfig() {
 		os.Exit(1)
 	}
 
+	loadTimezone()
 	logOutput()
+}
+
+func loadTimezone() {
+	var err error
+	var loc *time.Location
+	if cfg.timeZone != "" {
+		loc, err = time.LoadLocation(cfg.timeZone)
+		if err != nil {
+			fmt.Println("Failed to load location from config file", cfg.timeZone)
+		}
+		time.Local = loc
+	}
+	time.Local = time.UTC
 }
 
 func logOutput() {

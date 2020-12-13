@@ -7,6 +7,31 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestGetTodaysClockObject(t *testing.T) {
+	tests := []struct {
+		clock   time.Time
+		current time.Time
+		wantRes time.Time
+	}{
+
+		{
+			clock:   time.Date(0, 0, 0, 1, 2, 3, 0, time.Local),
+			current: time.Date(2020, 1, 2, 0, 0, 0, 0, time.Local),
+			wantRes: time.Date(2020, 1, 2, 1, 2, 3, 0, time.Local),
+		},
+		{
+			clock:   time.Date(2020, 1, 2, 3, 4, 5, 6, time.Local),
+			current: time.Date(2020, 1, 5, 0, 0, 0, 0, time.Local),
+			wantRes: time.Date(2020, 1, 5, 3, 4, 5, 0, time.Local),
+		},
+	}
+	for _, tt := range tests {
+		actual := getTodaysClockObject(tt.clock, tt.current)
+		expected := tt.wantRes
+		assert.Equal(t, expected, actual)
+	}
+}
+
 func TestGetSuitableTableID(t *testing.T) {
 	datefmt := "20060102"
 	location, _ := time.LoadLocation("Asia/Tokyo")
@@ -58,8 +83,8 @@ func createTableConfig(t, d string) TableConfig {
 	du, _ := time.ParseDuration(d)
 	ti, _ := time.Parse(timefmt, t)
 	return TableConfig{
-		DurationThreshold: durationThreshold{du},
-		TimeThreshold:     timeThreshold{ti},
+		DurationThreshold: DurationThreshold{du},
+		TimeThreshold:     TimeThreshold{ti},
 	}
 }
 

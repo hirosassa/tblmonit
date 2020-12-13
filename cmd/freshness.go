@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/hirosassa/tblmonit/config"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/xerrors"
@@ -22,14 +23,22 @@ func newFreshness() *cobra.Command {
 		Long: `Check freshness for each table.
 The target tables and time thresholds should be listed on config file.
 `,
+		Args: cobra.ExactArgs(1),
 		RunE: runFreshnessCmd,
 	}
+
 	return cmd
 }
 
 func runFreshnessCmd(cmd *cobra.Command, args []string) error {
+	var targetConfig config.Config
+	_, err := toml.DecodeFile(args[0], &targetConfig)
+	if err != nil {
+		return xerrors.Errorf("failed to load target config file: %w", err)
+	}
+
 	current := time.Now()
-	oldTables, err := config.CheckFreshness(cfg, current)
+	oldTables, err := config.CheckFreshness(targetConfig, current)
 	if err != nil {
 		return xerrors.Errorf("failed to check freshness: %w", err)
 	}
