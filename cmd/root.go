@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"time"
 
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/rs/zerolog"
@@ -12,21 +13,10 @@ import (
 
 var cfgFile string
 
-var config Config
+var cfg tmConfig
 
-type Config struct {
-	Project []Project
-}
-
-type Project struct {
-	Name        string
-	TableConfig []TableConfig
-}
-
-type TableConfig struct {
-	Table         string
-	DateForShards string
-	Timethreshold string
+type tmConfig struct {
+	timeZone string
 }
 
 var verbose, debug bool // for verbose and debug output
@@ -69,12 +59,26 @@ func initConfig() {
 		os.Exit(1)
 	}
 
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := viper.Unmarshal(&cfg); err != nil {
 		fmt.Println("Failed to read Config File", viper.ConfigFileUsed(), err)
 		os.Exit(1)
 	}
 
+	loadTimezone()
 	logOutput()
+}
+
+func loadTimezone() {
+	var err error
+	var loc *time.Location
+	if cfg.timeZone != "" {
+		loc, err = time.LoadLocation(cfg.timeZone)
+		if err != nil {
+			fmt.Println("Failed to load location from config file", cfg.timeZone)
+		}
+		time.Local = loc
+	}
+	time.Local = time.UTC
 }
 
 func logOutput() {
