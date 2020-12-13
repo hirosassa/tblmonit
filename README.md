@@ -101,13 +101,10 @@ As a result, the command outputs following config file which is acceptable by `t
       Table = "table1"
       DateForShards = ""
       TimeThreshold = "2020-12-13T09:00:00+09:00"
-      [Project.Dataset.TableConfig.DurationThreshold]
-        Duration = 86400000000000
-
+      DurationThreshold = "24h0m0s
     [[Project.Dataset.TableConfig]]
       Table = "sharded_table2_on_"
       DateForShards = "ONE_DAY_AGO"
       TimeThreshold = "2020-12-13T09:00:00+09:00"
-      [Project.Dataset.TableConfig.DurationThreshold]
-        Duration = 86400000000000
+      DurationThreshold = "24h0m0s
 ```
