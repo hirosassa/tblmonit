@@ -34,7 +34,6 @@ func TestGetTodaysClockObject(t *testing.T) {
 
 func TestGetSuitableTableID(t *testing.T) {
 	datefmt := "20060102"
-	location, _ := time.LoadLocation("Asia/Tokyo")
 	now := time.Now()
 
 	tests := []struct {
@@ -47,21 +46,21 @@ func TestGetSuitableTableID(t *testing.T) {
 				Table:         "sample_table_on_",
 				DateForShards: "TODAY",
 			},
-			wantRes: "sample_table_on_" + now.In(location).Format(datefmt),
+			wantRes: "sample_table_on_" + now.In(time.Local).Format(datefmt),
 		},
 		{
 			tc: TableConfig{
 				Table:         "sample_table_on_",
 				DateForShards: "ONE_DAY_AGO",
 			},
-			wantRes: "sample_table_on_" + now.In(location).AddDate(0, 0, -1).Format(datefmt),
+			wantRes: "sample_table_on_" + now.In(time.Local).AddDate(0, 0, -1).Format(datefmt),
 		},
 		{
 			tc: TableConfig{
 				Table:         "sample_table_on_",
 				DateForShards: "FIRST_DAY_OF_THE_MONTH",
 			},
-			wantRes: "sample_table_on_" + time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, location).Format(datefmt),
+			wantRes: "sample_table_on_" + time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.Local).Format(datefmt),
 		},
 		{
 			tc: TableConfig{
