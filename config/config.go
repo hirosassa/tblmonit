@@ -48,10 +48,19 @@ func (t *TimeThreshold) UnmarshalText(text []byte) error {
 	return err
 }
 
+func (t TimeThreshold) MarshalText() (text []byte, err error) {
+	text = []byte(t.Format(timefmt))
+	return text, nil
+}
+
 func (d *DurationThreshold) UnmarshalText(text []byte) error {
 	var err error
 	d.Duration, err = time.ParseDuration(string(text))
 	return err
+}
+
+func (d DurationThreshold) MarshalText() (text []byte, err error) {
+	return []byte(d.Duration.String()), nil
 }
 
 func getTodaysClockObject(clock, current time.Time) time.Time {

@@ -2,6 +2,7 @@ package flexconfig
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"time"
 
@@ -38,6 +39,8 @@ type FlexTableConfig struct {
 
 // Expand returns config.Config defined by given FlexConfig
 func (c *FlexConfig) Expand() (cfg config.Config, err error) {
+	fmt.Println(c)
+
 	ctx := context.Background()
 	pjs := make([]config.Project, 0, len(c.FlexProject))
 	for _, p := range c.FlexProject {
@@ -118,7 +121,7 @@ func (t *FlexTableConfig) expand(ctx context.Context, ds *bq.Dataset) (tc []conf
 		return []config.TableConfig{}, xerrors.Errorf("failed to fetch tables: %w", err)
 	}
 
-	ts := make([]config.TableConfig, 0, len(tables))
+	ts := make([]config.TableConfig, 0)
 	processed := make(map[string]struct{})
 	for _, tb := range tables {
 		table := tablePrefix(tb)
