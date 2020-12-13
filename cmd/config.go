@@ -38,7 +38,7 @@ func newConfigExpandCmd() *cobra.Command {
  on standard output
 For example:
 
-tablemonit config expand tblmonit.flex.conf >> .tblmonit.toml`,
+tablemonit config expand tblmonit.flex.toml`,
 		Args: cobra.ExactArgs(1),
 		RunE: runConfigExpandCmd,
 	}
