@@ -16,7 +16,7 @@ var cfgFile string
 var cfg tmConfig
 
 type tmConfig struct {
-	timeZone string
+	TimeZone string
 }
 
 var verbose, debug bool // for verbose and debug output
@@ -34,6 +34,7 @@ func Execute() {
 		os.Exit(1)
 	}
 }
+
 func initConfig() {
 	if cfgFile != "" {
 		// Use config file from the flag.
@@ -53,15 +54,13 @@ func initConfig() {
 
 	viper.AutomaticEnv() // read in environment variables that match
 
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("Failed to read Config File", viper.ConfigFileUsed(), err)
-		os.Exit(1)
-	}
-
-	if err := viper.Unmarshal(&cfg); err != nil {
-		fmt.Println("Failed to read Config File", viper.ConfigFileUsed(), err)
-		os.Exit(1)
+	// If a config file is not found, skip to set timezone.
+	if err := viper.ReadInConfig(); err == nil {
+		err := viper.Unmarshal(&cfg)
+		if err != nil {
+			fmt.Println("Failed to read Config File", viper.ConfigFileUsed(), err)
+			os.Exit(1)
+		}
 	}
 
 	loadTimezone()
@@ -69,16 +68,16 @@ func initConfig() {
 }
 
 func loadTimezone() {
-	var err error
-	var loc *time.Location
-	if cfg.timeZone != "" {
-		loc, err = time.LoadLocation(cfg.timeZone)
-		if err != nil {
-			fmt.Println("Failed to load location from config file", cfg.timeZone)
-		}
-		time.Local = loc
+	if cfg.TimeZone == "" {
+		return
 	}
-	time.Local = time.UTC
+
+	loc, err := time.LoadLocation(cfg.TimeZone)
+	if err != nil {
+		fmt.Println("Failed to load location from config file", cfg.TimeZone)
+		return
+	}
+	time.Local = loc
 }
 
 func logOutput() {

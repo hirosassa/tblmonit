@@ -4,6 +4,19 @@ Monitoring tool for BigQuery table's metadata
 
 ## Usage
 
+### Set config file
+
+You can set timezone in `$HOME/.tblmonit.yaml`, or set `--config` option.
+
+The default timezone is Local.
+And, the name is taken to be a location name corresponding to a file in the IANA Time Zone database, such as `America/New_York`.
+
+Example:
+
+```yaml
+timeZone: Asia/Tokyo
+```
+
 ### Check freshness of tables
 
 First of all, you need to prepare configuration file for listing target tables to monitor in TOML format like below:
@@ -29,7 +42,7 @@ First of all, you need to prepare configuration file for listing target tables t
     Name = "bigquery-project-id-2"
     [[Project.Dataset]]
         ID = "dataset3"
-        [[Project.Dataset.TableConfig]]        
+        [[Project.Dataset.TableConfig]]
             Table = "table1"
             DateForShards = ""
             Timethreshold = "09:00:00"
@@ -69,17 +82,17 @@ First of all, you should prepare toml file like below:
         [[FlexProject.FlexDataset.FlexTableConfig]]
             FlexTable = "*"  # you can use regular expression to specify tables
             DateForShards = "ONE_DAY_AGO"
-            Timethreshold = "09:00:00" # must specify 
-            DurationThreshold = "24h" # must specify 
+            Timethreshold = "09:00:00" # must specify
+            DurationThreshold = "24h" # must specify
 [[FlexProject]]
     ID = "bigquery-project-id-2"
     [[FlexProject.Dataset]] # not FlexDataset for exact
-        ID = "dataset1" 
+        ID = "dataset1"
         [[FlexProject.Dataset.TableConfig]]
-            FlexTable = "*"  
+            FlexTable = "*"
             DateForShards = "ONE_DAY_AGO"
-            Timethreshold = "09:00:00" # must specify 
-            DurationThreshold = "24h" # must specify 
+            Timethreshold = "09:00:00" # must specify
+            DurationThreshold = "24h" # must specify
 ```
 
 And then, run following command
