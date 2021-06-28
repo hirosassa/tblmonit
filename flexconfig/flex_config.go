@@ -33,8 +33,8 @@ type FlexTableConfig struct {
 	Table             string
 	FlexTable         string
 	DateForShards     string
-	TimeThreshold     config.TimeThreshold
-	DurationThreshold config.DurationThreshold
+	TimeThreshold     *config.TimeThreshold
+	DurationThreshold *config.DurationThreshold
 }
 
 // Expand returns config.Config defined by given FlexConfig
@@ -177,8 +177,8 @@ func (d *FlexDataset) filterDataset(dsiter *bq.DatasetIterator) (datasets []*bq.
 
 // filterTable returns tables whose ID has match of a regular expression FlexTableConfig.Table
 func (t *FlexTableConfig) filterTable(titer *bq.TableIterator) (tables []*bq.Table, err error) {
-	if !t.isRequiredFieldFilled() {
-		return nil, xerrors.Errorf("required field, TimeThreshold and DurationThreshold, is not filled")
+	if !t.isValid() {
+		return nil, xerrors.Errorf("required field, TimeThreshold or DurationThreshold, is not filled")
 	}
 
 	r := regexp.MustCompile(t.Table)
@@ -199,7 +199,9 @@ func (t *FlexTableConfig) filterTable(titer *bq.TableIterator) (tables []*bq.Tab
 	return tables, nil
 }
 
-// isRequiredFieldFilled returns true if both TimeThreshold and DurationThreshold is configured
-func (t *FlexTableConfig) isRequiredFieldFilled() bool {
-	return t.TimeThreshold.Time != time.Time{} && t.DurationThreshold.Duration != 0
+// isValid returns false if both TimeThreshold and DurationThreshold is not configured
+func (t *FlexTableConfig) isValid() bool {
+	timeThresholdIsNil := t.TimeThreshold == nil || t.TimeThreshold.Time == time.Time{}
+	durationThresholdIsNil := t.DurationThreshold == nil || t.DurationThreshold.Duration == 0
+	return !timeThresholdIsNil || !durationThresholdIsNil
 }

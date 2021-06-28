@@ -38,7 +38,7 @@ func TestTablePrefix(t *testing.T) {
 	}
 }
 
-func TestIsRequiredFieldFilled(t *testing.T) {
+func TestFlexTableConfig_IsValid(t *testing.T) {
 	tests := []struct {
 		ft      FlexTableConfig
 		wantRes bool
@@ -51,29 +51,29 @@ func TestIsRequiredFieldFilled(t *testing.T) {
 		},
 		{
 			ft: FlexTableConfig{
-				TimeThreshold: config.TimeThreshold{Time: time.Date(2020, 1, 2, 3, 4, 5, 6, time.Local)},
+				TimeThreshold: &config.TimeThreshold{Time: time.Date(2020, 1, 2, 3, 4, 5, 6, time.Local)},
 			},
-			wantRes: false,
+			wantRes: true,
 			desc:    "only TimeThreshold is filled",
 		},
 		{
 			ft: FlexTableConfig{
-				DurationThreshold: config.DurationThreshold{Duration: 12345},
+				DurationThreshold: &config.DurationThreshold{Duration: 12345},
 			},
-			wantRes: false,
+			wantRes: true,
 			desc:    "only Duration is filled",
 		},
 		{
 			ft: FlexTableConfig{
-				TimeThreshold:     config.TimeThreshold{Time: time.Date(2020, 1, 2, 3, 4, 5, 6, time.Local)},
-				DurationThreshold: config.DurationThreshold{Duration: 12345},
+				TimeThreshold:     &config.TimeThreshold{Time: time.Date(2020, 1, 2, 3, 4, 5, 6, time.Local)},
+				DurationThreshold: &config.DurationThreshold{Duration: 12345},
 			},
 			wantRes: true,
 			desc:    "both required fields are filled",
 		},
 	}
 	for _, tt := range tests {
-		actual := tt.ft.isRequiredFieldFilled()
+		actual := tt.ft.isValid()
 		expect := tt.wantRes
 		assert.Equal(t, expect, actual, tt.desc)
 	}

@@ -27,8 +27,8 @@ type Dataset struct {
 type TableConfig struct {
 	Table             string
 	DateForShards     string
-	TimeThreshold     TimeThreshold
-	DurationThreshold DurationThreshold
+	TimeThreshold     *TimeThreshold
+	DurationThreshold *DurationThreshold
 }
 
 type TimeThreshold struct {
@@ -86,8 +86,15 @@ func CheckFreshness(config Config, current time.Time) (oldTables []string, err e
 				md, err := client.Dataset(ds.ID).Table(tableID).Metadata(ctx)
 				if err != nil { // table is not created
 					log.Warn().Msgf("failed to fetch metadata: table: %s.%s", ds.ID, tableID)
-					oldTables = append(oldTables, fmt.Sprintf("%s.%s.%s", pj.ID, ds.ID, tableID))
-				} else if tc.isOld(current, md.LastModifiedTime) { // should not reach here when `if err != nil`
+
+					// Before time threshold, table may not exist.
+					if tc.TimeThreshold == nil || current.After(tc.TimeThreshold.Time) {
+						oldTables = append(oldTables, fmt.Sprintf("%s.%s.%s", pj.ID, ds.ID, tableID))
+					}
+					continue
+				}
+
+				if tc.isOld(current, md.LastModifiedTime) {
 					oldTables = append(oldTables, md.FullID)
 				}
 			}
@@ -124,9 +131,22 @@ func getSuitableTableID(tc TableConfig) string {
 			return tableIDPrefix
 		}
 	}
-
 }
 
 func (t *TableConfig) isOld(current, lastModified time.Time) bool {
-	return current.After(t.TimeThreshold.Time) && current.In(time.Local).Sub(lastModified.In(time.Local)) > t.DurationThreshold.Duration
+	return t.isOldForTimeThreshold(lastModified) || t.isOldForDurationThreshold(current, lastModified)
+}
+
+func (t *TableConfig) isOldForTimeThreshold(lastModified time.Time) bool {
+	if t.TimeThreshold == nil {
+		return false
+	}
+	return lastModified.After(t.TimeThreshold.Time)
+}
+
+func (t *TableConfig) isOldForDurationThreshold(current, lastModified time.Time) bool {
+	if t.DurationThreshold == nil {
+		return false
+	}
+	return current.In(time.Local).Sub(lastModified.In(time.Local)) > t.DurationThreshold.Duration
 }

@@ -82,8 +82,9 @@ First of all, you should prepare toml file like below:
         [[FlexProject.FlexDataset.FlexTableConfig]]
             FlexTable = "*"  # you can use regular expression to specify tables
             DateForShards = "ONE_DAY_AGO"
-            Timethreshold = "09:00:00" # must specify
-            DurationThreshold = "24h" # must specify
+            # TimeThreshold or DurationThreshold must specify
+            Timethreshold = "09:00:00"
+            DurationThreshold = "24h"
 [[FlexProject]]
     ID = "bigquery-project-id-2"
     [[FlexProject.Dataset]] # not FlexDataset for exact
@@ -91,8 +92,9 @@ First of all, you should prepare toml file like below:
         [[FlexProject.Dataset.TableConfig]]
             FlexTable = "*"
             DateForShards = "ONE_DAY_AGO"
-            Timethreshold = "09:00:00" # must specify
-            DurationThreshold = "24h" # must specify
+            # TimeThreshold or DurationThreshold must specify
+            Timethreshold = "09:00:00"
+            DurationThreshold = "24h"
 ```
 
 And then, run following command
