@@ -63,21 +63,25 @@ func initConfig() {
 		}
 	}
 
-	loadTimezone()
+	err := loadTimezone()
+	if err != nil {
+		fmt.Printf("Failed to load timezone: %v\n", err)
+		os.Exit(1)
+	}
 	logOutput()
 }
 
-func loadTimezone() {
+func loadTimezone() error {
 	if cfg.TimeZone == "" {
-		return
+		return nil
 	}
 
 	loc, err := time.LoadLocation(cfg.TimeZone)
 	if err != nil {
-		fmt.Println("Failed to load location from config file", cfg.TimeZone)
-		return
+		return fmt.Errorf("Failed to load location from config file: %s", cfg.TimeZone)
 	}
 	time.Local = loc
+	return nil
 }
 
 func logOutput() {
