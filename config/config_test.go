@@ -78,52 +78,85 @@ func TestGetSuitableTableID(t *testing.T) {
 	}
 }
 
-func createTableConfig(t, d string) TableConfig {
-	du, _ := time.ParseDuration(d)
-	ti, _ := time.Parse(timefmt, t)
-	return TableConfig{
-		DurationThreshold: DurationThreshold{du},
-		TimeThreshold:     TimeThreshold{ti},
-	}
-}
-
 func TestIsOld(t *testing.T) {
 	location, _ := time.LoadLocation("Asia/Tokyo")
 
-	tests := []struct {
+	tests := map[string]struct {
 		tc           TableConfig
 		current      time.Time
 		lastModified time.Time
-		wantRes      bool
+		isOld        bool
 	}{
-		{
-			tc:           createTableConfig("03:00", "24h"),
-			current:      time.Date(2020, 1, 1, 12, 0, 0, 0, location),
-			lastModified: time.Date(2020, 1, 1, 3, 0, 0, 0, location),
-			wantRes:      false,
+		"lastModified -> timethreshold is correct": {
+			tc: TableConfig{
+				TimeThreshold: &TimeThreshold{
+					Time: time.Date(2020, 1, 1, 12, 0, 0, 0, location),
+				},
+			},
+			lastModified: time.Date(2020, 1, 1, 11, 0, 0, 0, location),
+			isOld:        false,
 		},
-		{
-			tc:           createTableConfig("03:00", "24h"),
-			current:      time.Date(2020, 1, 2, 3, 0, 0, 0, location),
-			lastModified: time.Date(2020, 1, 1, 3, 0, 0, 0, location),
-			wantRes:      false,
+		"timethreshold -> lastModified is incorrect": {
+			tc: TableConfig{
+				TimeThreshold: &TimeThreshold{
+					Time: time.Date(2020, 1, 1, 11, 0, 0, 0, location),
+				},
+			},
+			lastModified: time.Date(2020, 1, 1, 12, 0, 0, 0, location),
+			isOld:        true,
 		},
-		{
-			tc:           createTableConfig("03:00", "24h"),
-			current:      time.Date(2020, 1, 2, 20, 1, 0, 0, location),
-			lastModified: time.Date(2020, 1, 1, 20, 0, 0, 0, location),
-			wantRes:      true,
+		"Duration from lastModified to current is in durationThreshold": {
+			tc: TableConfig{
+				DurationThreshold: &DurationThreshold{
+					Duration: time.Hour,
+				},
+			},
+			lastModified: time.Date(2020, 1, 1, 11, 0, 0, 0, location),
+			current:      time.Date(2020, 1, 1, 11, 30, 0, 0, location),
+			isOld:        false,
 		},
-		{
-			tc:           createTableConfig("03:00", "24h"),
-			current:      time.Date(2020, 1, 2, 23, 0, 0, 0, location),
-			lastModified: time.Date(2020, 1, 1, 20, 0, 0, 0, location),
-			wantRes:      true,
+		"Duration from lastModified to current is over durationThreshold": {
+			tc: TableConfig{
+				DurationThreshold: &DurationThreshold{
+					Duration: time.Hour,
+				},
+			},
+			lastModified: time.Date(2020, 1, 1, 11, 0, 0, 0, location),
+			current:      time.Date(2020, 1, 1, 12, 30, 0, 0, location),
+			isOld:        true,
+		},
+		"Both timeThoreshold and durationThreshold are correct": {
+			tc: TableConfig{
+				DurationThreshold: &DurationThreshold{
+					Duration: time.Hour,
+				},
+				TimeThreshold: &TimeThreshold{
+					Time: time.Date(2020, 1, 1, 12, 0, 0, 0, location),
+				},
+			},
+			lastModified: time.Date(2020, 1, 1, 11, 0, 0, 0, location),
+			current:      time.Date(2020, 1, 1, 11, 30, 0, 0, location),
+			isOld:        false,
+		},
+		"Both timeThoreshold and durationThreshold are incorrect": {
+			tc: TableConfig{
+				DurationThreshold: &DurationThreshold{
+					Duration: time.Hour,
+				},
+				TimeThreshold: &TimeThreshold{
+					Time: time.Date(2020, 1, 1, 10, 0, 0, 0, location),
+				},
+			},
+			lastModified: time.Date(2020, 1, 1, 11, 0, 0, 0, location),
+			current:      time.Date(2020, 1, 1, 12, 30, 0, 0, location),
+			isOld:        true,
 		},
 	}
-	for _, tt := range tests {
-		actual := tt.tc.isOld(tt.current, tt.lastModified)
-		expected := tt.wantRes
-		assert.Equal(t, expected, actual)
+	for n, tt := range tests {
+		t.Run(n, func(t *testing.T) {
+			actual := tt.tc.isOld(tt.current, tt.lastModified)
+			expected := tt.isOld
+			assert.Equal(t, expected, actual)
+		})
 	}
 }
