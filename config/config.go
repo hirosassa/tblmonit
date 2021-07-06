@@ -8,6 +8,7 @@ import (
 	bq "cloud.google.com/go/bigquery"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/xerrors"
+	"google.golang.org/api/option"
 )
 
 type Config struct {
@@ -70,11 +71,11 @@ func getTodaysClockObject(clock, current time.Time) time.Time {
 }
 
 // CheckFreshness returns old tables whose last modified time is oldeer than time threshold on the config file.
-func CheckFreshness(config Config, current time.Time) (oldTables []string, err error) {
+func CheckFreshness(config Config, current time.Time, opts ...option.ClientOption) (oldTables []string, err error) {
 	ctx := context.Background()
 
 	for _, pj := range config.Project {
-		client, err := bq.NewClient(ctx, pj.ID)
+		client, err := bq.NewClient(ctx, pj.ID, opts...)
 		if err != nil {
 			return nil, xerrors.Errorf("failed to create client: %w", err)
 		}
