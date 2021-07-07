@@ -70,8 +70,13 @@ func getTodaysClockObject(clock, current time.Time) time.Time {
 	return time.Date(y, m, d, hh, mm, ss, 0, time.Local)
 }
 
+type FreshnessResult struct {
+	Table  string
+	Reason []string
+}
+
 // CheckFreshness returns old tables whose last modified time is oldeer than time threshold on the config file.
-func CheckFreshness(config Config, current time.Time, opts ...option.ClientOption) (oldTables []string, err error) {
+func CheckFreshness(config Config, current time.Time, opts ...option.ClientOption) (oldTables []FreshnessResult, err error) {
 	ctx := context.Background()
 
 	for _, pj := range config.Project {
@@ -90,13 +95,19 @@ func CheckFreshness(config Config, current time.Time, opts ...option.ClientOptio
 
 					// Before time threshold, table may not exist.
 					if tc.TimeThreshold == nil || current.After(tc.TimeThreshold.Time) {
-						oldTables = append(oldTables, fmt.Sprintf("%s.%s.%s", pj.ID, ds.ID, tableID))
+						oldTables = append(oldTables, FreshnessResult{
+							Table:  fmt.Sprintf("%s.%s.%s", pj.ID, ds.ID, tableID),
+							Reason: []string{"Table doesn't exist."},
+						})
 					}
 					continue
 				}
 
-				if tc.isOld(current, md.LastModifiedTime) {
-					oldTables = append(oldTables, md.FullID)
+				if old, reason := tc.isOld(current, md.LastModifiedTime); old {
+					oldTables = append(oldTables, FreshnessResult{
+						Table:  md.FullID,
+						Reason: reason,
+					})
 				}
 			}
 		}
@@ -134,20 +145,38 @@ func getSuitableTableID(tc TableConfig) string {
 	}
 }
 
-func (t *TableConfig) isOld(current, lastModified time.Time) bool {
-	return t.isOldForTimeThreshold(lastModified) || t.isOldForDurationThreshold(current, lastModified)
+func (t *TableConfig) isOld(current, lastModified time.Time) (isOld bool, reason []string) {
+	isOld, timeReason := t.isOldForTimeThreshold(lastModified)
+	if isOld {
+		reason = append(reason, timeReason)
+	}
+
+	isOld, durationReason := t.isOldForDurationThreshold(current, lastModified)
+	if isOld {
+		reason = append(reason, durationReason)
+	}
+
+	return len(reason) > 0, reason
 }
 
-func (t *TableConfig) isOldForTimeThreshold(lastModified time.Time) bool {
+func (t *TableConfig) isOldForTimeThreshold(lastModified time.Time) (isOld bool, reason string) {
 	if t.TimeThreshold == nil {
-		return false
+		return false, ""
 	}
-	return lastModified.After(t.TimeThreshold.Time)
+
+	if !lastModified.After(t.TimeThreshold.Time) {
+		return false, ""
+	}
+	return true, fmt.Sprintf("The table should be created by %s, but last modified time is %s", t.TimeThreshold.Time.Format("15:04"), lastModified.Format("15:04"))
 }
 
-func (t *TableConfig) isOldForDurationThreshold(current, lastModified time.Time) bool {
+func (t *TableConfig) isOldForDurationThreshold(current, lastModified time.Time) (isOld bool, reason string) {
 	if t.DurationThreshold == nil {
-		return false
+		return false, ""
 	}
-	return current.In(time.Local).Sub(lastModified.In(time.Local)) > t.DurationThreshold.Duration
+
+	if current.In(time.Local).Sub(lastModified.In(time.Local)) < t.DurationThreshold.Duration {
+		return false, ""
+	}
+	return true, fmt.Sprintf("The table should be modified in %s, but not modified in %s", t.DurationThreshold.Duration, current.In(time.Local).Sub(lastModified.In(time.Local)))
 }
