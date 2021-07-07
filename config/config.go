@@ -97,7 +97,7 @@ func CheckFreshness(config Config, current time.Time, opts ...option.ClientOptio
 					if tc.TimeThreshold == nil || current.After(tc.TimeThreshold.Time) {
 						oldTables = append(oldTables, FreshnessResult{
 							Table:  fmt.Sprintf("%s.%s.%s", pj.ID, ds.ID, tableID),
-							Reason: []string{"Table doesn't exist."},
+							Reason: []string{"Table doesn't exist"},
 						})
 					}
 					continue
