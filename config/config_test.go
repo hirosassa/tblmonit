@@ -85,7 +85,10 @@ func TestIsOld(t *testing.T) {
 		tc           TableConfig
 		current      time.Time
 		lastModified time.Time
-		isOld        bool
+
+		// output
+		isOld  bool
+		reason []string
 	}{
 		"lastModified -> timethreshold is correct": {
 			tc: TableConfig{
@@ -104,6 +107,7 @@ func TestIsOld(t *testing.T) {
 			},
 			lastModified: time.Date(2020, 1, 1, 12, 0, 0, 0, location),
 			isOld:        true,
+			reason:       []string{"The table should be created by 11:00, but last modified time is 12:00"},
 		},
 		"Duration from lastModified to current is in durationThreshold": {
 			tc: TableConfig{
@@ -124,6 +128,7 @@ func TestIsOld(t *testing.T) {
 			lastModified: time.Date(2020, 1, 1, 11, 0, 0, 0, location),
 			current:      time.Date(2020, 1, 1, 12, 30, 0, 0, location),
 			isOld:        true,
+			reason:       []string{"The table should be modified in 1h0m0s, but not modified in 1h30m0s"},
 		},
 		"Both timeThoreshold and durationThreshold are correct": {
 			tc: TableConfig{
@@ -150,13 +155,17 @@ func TestIsOld(t *testing.T) {
 			lastModified: time.Date(2020, 1, 1, 11, 0, 0, 0, location),
 			current:      time.Date(2020, 1, 1, 12, 30, 0, 0, location),
 			isOld:        true,
+			reason: []string{
+				"The table should be created by 10:00, but last modified time is 11:00",
+				"The table should be modified in 1h0m0s, but not modified in 1h30m0s",
+			},
 		},
 	}
 	for n, tt := range tests {
 		t.Run(n, func(t *testing.T) {
-			actual := tt.tc.isOld(tt.current, tt.lastModified)
-			expected := tt.isOld
-			assert.Equal(t, expected, actual)
+			actual, reason := tt.tc.isOld(tt.current, tt.lastModified)
+			assert.Equal(t, tt.isOld, actual)
+			assert.Equal(t, tt.reason, reason)
 		})
 	}
 }

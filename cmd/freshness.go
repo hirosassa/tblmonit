@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -17,6 +18,7 @@ func init() {
 }
 
 func newFreshness() *cobra.Command {
+	var showDetail bool
 	cmd := &cobra.Command{
 		Use:   "freshness",
 		Short: "Check freshness for each table",
@@ -24,13 +26,17 @@ func newFreshness() *cobra.Command {
 The target tables and time thresholds should be listed on config file.
 `,
 		Args: cobra.ExactArgs(1),
-		RunE: runFreshnessCmd,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runFreshnessCmd(args, showDetail)
+		},
 	}
+
+	cmd.Flags().BoolVarP(&showDetail, "detail", "d", false, "show details of a specific reason of old tables")
 
 	return cmd
 }
 
-func runFreshnessCmd(cmd *cobra.Command, args []string) error {
+func runFreshnessCmd(args []string, showDetail bool) error {
 	var targetConfig config.Config
 	_, err := toml.DecodeFile(args[0], &targetConfig)
 	if err != nil {
@@ -48,9 +54,16 @@ func runFreshnessCmd(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	var result strings.Builder
 	for _, t := range oldTables {
-		fmt.Printf("%s\n", t)
+		result.WriteString(t.Table)
+		if showDetail {
+			reason := fmt.Sprintf(" (%s)", strings.Join(t.Reason, ","))
+			result.WriteString(reason)
+		}
+		result.WriteString("\n")
 	}
+	fmt.Print(result.String())
 
 	return nil
 }
