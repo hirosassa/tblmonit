@@ -133,6 +133,12 @@ func getSuitableTableID(tc TableConfig) string {
 			firstDayOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.Local).Format(datefmt)
 			return tableIDPrefix + firstDayOfMonth
 		}
+	case "EVERY_SUNDAY":
+		{
+			now := time.Now().In(time.Local)
+			targetDay := now.Add(time.Hour * 24 * time.Duration(7-now.Weekday())).Format(datefmt)
+			return tableIDPrefix + targetDay
+		}
 	case "": // non-sharded table
 		{
 			return tableIDPrefix
