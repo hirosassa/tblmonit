@@ -69,6 +69,13 @@ func TestGetSuitableTableID(t *testing.T) {
 			},
 			wantRes: "non_sharded_table",
 		},
+		{
+			tc: TableConfig{
+				Table:         "sample_table_on_",
+				DateForShards: "EVERY_SUNDAY",
+			},
+			wantRes: "sample_table_on_" + now.Add(time.Hour*24*time.Duration(7-now.Weekday())).Format(datefmt),
+		},
 	}
 
 	for _, tt := range tests {
